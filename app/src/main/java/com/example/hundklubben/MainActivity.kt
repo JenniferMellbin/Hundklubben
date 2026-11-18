@@ -1,5 +1,6 @@
 package com.example.hundklubben
 
+import android.R.attr.onClick
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -51,6 +52,13 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,142 +110,182 @@ class MainActivity : ComponentActivity() {
         var aktivitetNamn by remember { mutableStateOf("") }
         var valdKategori by remember { mutableStateOf("Träning") }
         var redigerarId by remember { mutableStateOf<Int?>(null) }
+        var valtFilter by remember { mutableStateOf("Alla") }
+        val snackbarHostState = remember { SnackbarHostState() }
+        val coroutineScope = rememberCoroutineScope()
+        //snackbarHostState håller reda på meddelandet som ska visas längst ner i appen
+        //coroutineScope gör att vi kan visa meddelandet utan att låsa gränssnittet
+        // medan vi väntar på att användaren eventuellt trycker på Ångra.
 
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp)
+        Box(
+            modifier = modifier.fillMaxSize()
         ) {
-
-            Text(
-                text = "Välkommen till $name!",
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter)
             )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            OutlinedTextField(
-                value = aktivitetNamn,
-                onValueChange = { aktivitetNamn = it },
-                label = { Text("Aktivitetens namn") }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text("Välj kategori:")
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
             ) {
-                listOf("Träning", "Tävling", "Kurs").forEach { kategori ->
 
-                    if (valdKategori == kategori) {
-                        Button(
-                            onClick = { valdKategori = kategori }
-                        ) {
-                            Text(kategori)
-                        }
-                    } else {
-                        OutlinedButton(
-                            onClick = { valdKategori = kategori }
-                        ) {
-                            Text(kategori)
-                        }
-                    }
-                }
-            }
+                Text(
+                    text = "Välkommen till $name!",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold
+                )
 
-            Button(
-                onClick = {
-                    if (aktivitetNamn.isNotBlank()) {
+                Spacer(modifier = Modifier.height(20.dp))
 
-                        if (redigerarId != null) {
-                            viewModel.redigeraAktivitet(
-                                redigerarId!!,
-                                aktivitetNamn,
-                                valdKategori
-                            )
-                            redigerarId = null
+                OutlinedTextField(
+                    value = aktivitetNamn,
+                    onValueChange = { aktivitetNamn = it },
+                    label = { Text("Aktivitetens namn") }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("Välj kategori:")
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf("Träning", "Tävling", "Kurs").forEach { kategori ->
+
+                        if (valdKategori == kategori) {
+                            Button(
+                                onClick = { valdKategori = kategori }
+                            ) {
+                                Text(kategori)
+                            }
                         } else {
-                            viewModel.laggTillAktivitet(
-                                aktivitetNamn,
-                                valdKategori
-                            )
+                            OutlinedButton(
+                                onClick = { valdKategori = kategori }
+                            ) {
+                                Text(kategori)
+                            }
                         }
-
-                        aktivitetNamn = ""
                     }
                 }
-            ) {
+
+                Button(
+                    onClick = {
+                        if (aktivitetNamn.isNotBlank()) {
+
+                            if (redigerarId != null) {
+                                viewModel.redigeraAktivitet(
+                                    redigerarId!!,
+                                    aktivitetNamn,
+                                    valdKategori
+                                )
+                                redigerarId = null
+                            } else {
+                                viewModel.laggTillAktivitet(
+                                    aktivitetNamn,
+                                    valdKategori
+                                )
+                            }
+
+                            aktivitetNamn = ""
+                        }
+                    }
+                ) {
+                    Text(
+                        if (redigerarId != null) "Spara ändringar"
+                        else "Lägg till aktivitet"
+                    )
+                }
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text("Filtrera aktiviteter:")
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf("Alla", "Ej klara", "Klara").forEach { filter ->
+
+                        if (valtFilter == filter) {
+                            Button(
+                                onClick = { valtFilter = filter }
+                            ) {
+                                Text(filter)
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = { valtFilter = filter }
+                            ) {
+                                Text(filter)
+                            }
+                        }
+                    }
+                }
+                val totalt = viewModel.aktiviteter.size
+                val genomforda = viewModel.aktiviteter.count { it.genomford }
+
                 Text(
-                    if (redigerarId != null) "Spara ändringar"
-                    else "Lägg till aktivitet"
+                    text = "$genomforda av $totalt aktiviteter genomförda"
                 )
-            }
-            Spacer(modifier = Modifier.height(20.dp))
 
-            Text(
-                text = "Mina aktiviteter",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
-            val totalt = viewModel.aktiviteter.size
-            val genomforda = viewModel.aktiviteter.count { it.genomford }
+                Spacer(modifier = Modifier.height(10.dp))
 
-            Text(
-                text = "$genomforda av $totalt aktiviteter genomförda"
-            )
+                if (viewModel.aktiviteter.isEmpty()) {
+                    Text(
+                        text = "Du har inga aktiviteter ännu. Lägg till din första aktivitet! 🐾"
+                    )
+                }
+                val filtreradeAktiviteter = when (valtFilter) {
+                    "Ej klara" -> viewModel.aktiviteter.filter { !it.genomford }
+                    "Klara" -> viewModel.aktiviteter.filter { it.genomford }
+                    else -> viewModel.aktiviteter
+                }
+                LazyColumn {
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            if (viewModel.aktiviteter.isEmpty()) {
-                Text(
-                    text = "Du har inga aktiviteter ännu. Lägg till din första aktivitet! 🐾"
-                )
-            }
-            LazyColumn {
-
-                items(
-                    items = viewModel.aktiviteter,
-                    key = { it.id }
-                ) { aktivitet ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFFFFAF8)
-                        ),
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 4.dp
-                        )
-                    ) {
-                        Row(
+                    items(
+                        items = filtreradeAktiviteter,
+                        key = { it.id }
+                    ) { aktivitet ->
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(vertical = 6.dp),
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFFFFFAF8)
+                            ),
+                            elevation = CardDefaults.cardElevation(
+                                defaultElevation = 4.dp
+                            )
                         ) {
-                            Checkbox(
-                                checked = aktivitet.genomford,
-                                onCheckedChange = {
-                                    viewModel.andraStatus(aktivitet.id)
-                                }
-                            )
-
-                            Text(
-                                text = "${aktivitet.namn} (${aktivitet.kategori})"
-                            )
-                            TextButton(
-                                onClick = {
-                                    redigerarId = aktivitet.id
-                                    aktivitetNamn = aktivitet.namn
-                                    valdKategori = aktivitet.kategori
-                                }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
+                                Checkbox(
+                                    checked = aktivitet.genomford,
+                                    onCheckedChange = {
+                                        viewModel.andraStatus(aktivitet.id)
+                                    }
+                                )
+
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        text = aktivitet.namn,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF654B86)
+                                    )
+
+                                    Text(
+                                        text = aktivitet.kategori,
+                                        color = Color(0xFF9673C4),
+                                        fontSize = 12.sp
+                                    )
+                                }
                                 IconButton(
                                     onClick = {
                                         redigerarId = aktivitet.id
@@ -251,33 +299,52 @@ class MainActivity : ComponentActivity() {
                                         tint = Color(0xFF9673C4)
                                     )
                                 }
-                            }
-                            IconButton(
-                                onClick = {
-                                    viewModel.taBortAktivitet(aktivitet.id)
+                                IconButton(
+                                    onClick = {
+                                        val borttagenAktivitet = aktivitet
+
+                                        viewModel.taBortAktivitet(aktivitet.id)
+
+                                        coroutineScope.launch {
+                                            val resultat = snackbarHostState.showSnackbar(
+                                                message = "Aktiviteten har tagits bort",
+                                                actionLabel = "Ångra",
+                                                withDismissAction = true
+                                            )
+
+                                            if (resultat == SnackbarResult.ActionPerformed) {
+                                                viewModel.aterstallAktivitet(borttagenAktivitet)
+                                            }
+                                        }
+                                    }
+                                ) {
+
+
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Ta bort aktivitet",
+                                        tint = Color(0xFF9673C4)
+                                    )
+
                                 }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Ta bort aktivitet",
-                                    tint = Color(0xFF9673C4)
-                                )
                             }
                         }
-
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
         }
     }
 
-    @Preview(showBackground = true)
-    @Composable
-    fun GreetingPreview() {
-        HundklubbenTheme {
-            Greeting("Android")
-        }
-    }
+@Preview(showBackground = true)
+
+                    @Composable
+
+                    fun GreetingPreview() {
+                        HundklubbenTheme {
+                            Greeting("Android")
+                        }
+                    }
+
+
 
 

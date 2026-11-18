@@ -30,6 +30,11 @@ class HundklubbenViewModel : ViewModel() {
     fun taBortAktivitet(id: Int) {
         aktiviteter.removeAll { it.id == id }
     }
+    fun aterstallAktivitet(aktivitet: Aktivitet) {
+        if (aktiviteter.none { it.id == aktivitet.id }) {
+            aktiviteter.add(aktivitet)
+        }
+    }
     fun redigeraAktivitet(
         id: Int,
         nyttNamn: String,
