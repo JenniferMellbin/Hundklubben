@@ -39,9 +39,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -194,39 +203,70 @@ class MainActivity : ComponentActivity() {
                     items = viewModel.aktiviteter,
                     key = { it.id }
                 ) { aktivitet ->
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFFFFAF8)
+                        ),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 4.dp
+                        )
                     ) {
-                        Checkbox(
-                            checked = aktivitet.genomford,
-                            onCheckedChange = {
-                                viewModel.andraStatus(aktivitet.id)
-                            }
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = aktivitet.genomford,
+                                onCheckedChange = {
+                                    viewModel.andraStatus(aktivitet.id)
+                                }
+                            )
 
-                        Text(
-                            text = "${aktivitet.namn} (${aktivitet.kategori})"
-                        )
-                        TextButton(
-                            onClick = {
-                                redigerarId = aktivitet.id
-                                aktivitetNamn = aktivitet.namn
-                                valdKategori = aktivitet.kategori
+                            Text(
+                                text = "${aktivitet.namn} (${aktivitet.kategori})"
+                            )
+                            TextButton(
+                                onClick = {
+                                    redigerarId = aktivitet.id
+                                    aktivitetNamn = aktivitet.namn
+                                    valdKategori = aktivitet.kategori
+                                }
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        redigerarId = aktivitet.id
+                                        aktivitetNamn = aktivitet.namn
+                                        valdKategori = aktivitet.kategori
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Redigera aktivitet",
+                                        tint = Color(0xFF9673C4)
+                                    )
+                                }
                             }
-                        ) {
-                            Text("Redigera")
-                        }
-                        TextButton(
-                            onClick = {
-                                viewModel.taBortAktivitet(aktivitet.id)
+                            IconButton(
+                                onClick = {
+                                    viewModel.taBortAktivitet(aktivitet.id)
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Ta bort aktivitet",
+                                    tint = Color(0xFF9673C4)
+                                )
                             }
-                        ) {
-                            Text("Ta bort")
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
-
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
@@ -239,4 +279,5 @@ class MainActivity : ComponentActivity() {
             Greeting("Android")
         }
     }
+
 
