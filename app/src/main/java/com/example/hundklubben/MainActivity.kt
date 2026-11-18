@@ -24,6 +24,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Checkbox
+import androidx.compose.ui.Alignment
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,7 +54,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
 
+    val viewModel = remember { HundklubbenViewModel() }
     var aktivitetNamn by remember { mutableStateOf("") }
+    var valdKategori by remember { mutableStateOf("Träning") }
+
 
     Column(modifier = modifier) {
 
@@ -64,18 +76,90 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.height(16.dp))
 
+        Text("Välj kategori:")
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf("Träning", "Tävling", "Kurs").forEach { kategori ->
+
+                if (valdKategori == kategori) {
+                    Button(
+                        onClick = { valdKategori = kategori }
+                    ) {
+                        Text(kategori)
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = { valdKategori = kategori }
+                    ) {
+                        Text(kategori)
+                    }
+                }
+            }
+        }
+
         Button(
-            onClick = { }
+            onClick = {
+                if (aktivitetNamn.isNotBlank()) {
+                    viewModel.laggTillAktivitet(aktivitetNamn, valdKategori)
+                    aktivitetNamn = ""
+                }
+            }
         ) {
             Text("Lägg till aktivitet")
         }
-    }
-}
+        Spacer(modifier = Modifier.height(20.dp))
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    HundklubbenTheme {
-        Greeting("Android")
+        Text(
+            text = "Mina aktiviteter",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
+        )
+        val totalt = viewModel.aktiviteter.size
+        val genomforda = viewModel.aktiviteter.count { it.genomford }
+
+        Text(
+            text = "$genomforda av $totalt aktiviteter genomförda"
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        LazyColumn {
+
+            items(
+                items = viewModel.aktiviteter,
+                key = { it.id }
+            ) { aktivitet ->
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = aktivitet.genomford,
+                        onCheckedChange = {
+                            viewModel.andraStatus(aktivitet.id)
+                        }
+                    )
+
+                    Text(
+                        text = "${aktivitet.namn} (${aktivitet.kategori})"
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
     }
 }
+            @Preview(showBackground = true)
+            @Composable
+            fun GreetingPreview() {
+                HundklubbenTheme {
+                    Greeting("Android")
+                }
+            }
+
+

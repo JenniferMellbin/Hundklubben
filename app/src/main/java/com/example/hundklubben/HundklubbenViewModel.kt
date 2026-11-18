@@ -16,4 +16,15 @@ class HundklubbenViewModel : ViewModel() {
 
         aktiviteter.add(nyAktivitet)
     }
+    fun andraStatus(id: Int) {
+        val index = aktiviteter.indexOfFirst { it.id == id }
+
+        if (index != -1) {
+            val aktivitet = aktiviteter[index]
+
+            aktiviteter[index] = aktivitet.copy(
+                genomford = !aktivitet.genomford
+            )
+        }
+    }
 }
