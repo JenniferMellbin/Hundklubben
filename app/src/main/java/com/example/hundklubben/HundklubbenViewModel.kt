@@ -27,4 +27,25 @@ class HundklubbenViewModel : ViewModel() {
             )
         }
     }
+    fun taBortAktivitet(id: Int) {
+        aktiviteter.removeAll { it.id == id }
+    }
+    fun redigeraAktivitet(
+        id: Int,
+        nyttNamn: String,
+        nyKategori: String
+    ) {
+        if (nyttNamn.isBlank()) return
+
+        val index = aktiviteter.indexOfFirst { it.id == id }
+
+        if (index != -1) {
+            val aktivitet = aktiviteter[index]
+
+            aktiviteter[index] = aktivitet.copy(
+                namn = nyttNamn.trim(),
+                kategori = nyKategori
+            )
+        }
+    }
 }

@@ -33,6 +33,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Checkbox
 import androidx.compose.ui.Alignment
+import androidx.compose.material3.TextButton
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,7 +58,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     val viewModel = remember { HundklubbenViewModel() }
     var aktivitetNamn by remember { mutableStateOf("") }
     var valdKategori by remember { mutableStateOf("Träning") }
-
+    var redigerarId by remember { mutableStateOf<Int?>(null) }
 
     Column(modifier = modifier) {
 
@@ -104,12 +105,29 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         Button(
             onClick = {
                 if (aktivitetNamn.isNotBlank()) {
-                    viewModel.laggTillAktivitet(aktivitetNamn, valdKategori)
+
+                    if (redigerarId != null) {
+                        viewModel.redigeraAktivitet(
+                            redigerarId!!,
+                            aktivitetNamn,
+                            valdKategori
+                        )
+                        redigerarId = null
+                    } else {
+                        viewModel.laggTillAktivitet(
+                            aktivitetNamn,
+                            valdKategori
+                        )
+                    }
+
                     aktivitetNamn = ""
                 }
             }
         ) {
-            Text("Lägg till aktivitet")
+            Text(
+                if (redigerarId != null) "Spara ändringar"
+                else "Lägg till aktivitet"
+            )
         }
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -127,6 +145,11 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        if (viewModel.aktiviteter.isEmpty()) {
+            Text(
+                text = "Du har inga aktiviteter ännu. Lägg till din första aktivitet! 🐾"
+            )
+        }
         LazyColumn {
 
             items(
@@ -147,6 +170,22 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                     Text(
                         text = "${aktivitet.namn} (${aktivitet.kategori})"
                     )
+                    TextButton(
+                        onClick = {
+                            redigerarId = aktivitet.id
+                            aktivitetNamn = aktivitet.namn
+                            valdKategori = aktivitet.kategori
+                        }
+                    ) {
+                        Text("Redigera")
+                    }
+                    TextButton(
+                        onClick = {
+                            viewModel.taBortAktivitet(aktivitet.id)
+                        }
+                    ) {
+                        Text("Ta bort")
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
