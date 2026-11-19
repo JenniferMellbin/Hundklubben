@@ -130,18 +130,13 @@ class MainActivity : ComponentActivity() {
                     .padding(horizontal = 20.dp)
             ) {
 
-                Text(
-                    text = "Välkommen till $name!",
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                ValkomstText(namn = name)
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                OutlinedTextField(
-                    value = aktivitetNamn,
-                    onValueChange = { aktivitetNamn = it },
-                    label = { Text("Aktivitetens namn") }
+                AktivitetsFalt(
+                    namn = aktivitetNamn,
+                    onNamnAndrat = { aktivitetNamn = it }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -224,8 +219,9 @@ class MainActivity : ComponentActivity() {
                 val totalt = viewModel.aktiviteter.size
                 val genomforda = viewModel.aktiviteter.count { it.genomford }
 
-                Text(
-                    text = "$genomforda av $totalt aktiviteter genomförda"
+                AktivitetsStatistik(
+                    genomforda = genomforda,
+                    totalt = totalt
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -246,90 +242,41 @@ class MainActivity : ComponentActivity() {
                         items = filtreradeAktiviteter,
                         key = { it.id }
                     ) { aktivitet ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 6.dp),
-                            shape = RoundedCornerShape(20.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFFFFAF8)
-                            ),
-                            elevation = CardDefaults.cardElevation(
-                                defaultElevation = 4.dp
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = aktivitet.genomford,
-                                    onCheckedChange = {
-                                        viewModel.andraStatus(aktivitet.id)
+                        // Visar varje aktivitet med hjälp av vår egen composable AktivitetsKort.
+// Här kopplas knapparna till ViewModel som hanterar ändringarna.
+// Användaren kan markera, redigera och ta bort aktiviteter.
+// Vid borttagning visas en Snackbar med möjlighet att ångra.
+                        AktivitetsKort(
+                            aktivitet = aktivitet,
+
+                            onAndraStatus = {
+                                viewModel.andraStatus(aktivitet.id)
+                            },
+
+                            onRedigera = {
+                                redigerarId = aktivitet.id
+                                aktivitetNamn = aktivitet.namn
+                                valdKategori = aktivitet.kategori
+                            },
+// Tar bort aktiviteten och låter användaren ångra borttagningen
+                            onTaBort = {
+                                val borttagenAktivitet = aktivitet
+
+                                viewModel.taBortAktivitet(aktivitet.id)
+
+                                coroutineScope.launch {
+                                    val resultat = snackbarHostState.showSnackbar(
+                                        message = "Aktiviteten har tagits bort",
+                                        actionLabel = "Ångra",
+                                        withDismissAction = true
+                                    )
+
+                                    if (resultat == SnackbarResult.ActionPerformed) {
+                                        viewModel.aterstallAktivitet(borttagenAktivitet)
                                     }
-                                )
-
-                                Column(
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(
-                                        text = aktivitet.namn,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF654B86)
-                                    )
-
-                                    Text(
-                                        text = aktivitet.kategori,
-                                        color = Color(0xFF9673C4),
-                                        fontSize = 12.sp
-                                    )
-                                }
-                                IconButton(
-                                    onClick = {
-                                        redigerarId = aktivitet.id
-                                        aktivitetNamn = aktivitet.namn
-                                        valdKategori = aktivitet.kategori
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Edit,
-                                        contentDescription = "Redigera aktivitet",
-                                        tint = Color(0xFF9673C4)
-                                    )
-                                }
-                                IconButton(
-                                    onClick = {
-                                        val borttagenAktivitet = aktivitet
-
-                                        viewModel.taBortAktivitet(aktivitet.id)
-
-                                        coroutineScope.launch {
-                                            val resultat = snackbarHostState.showSnackbar(
-                                                message = "Aktiviteten har tagits bort",
-                                                actionLabel = "Ångra",
-                                                withDismissAction = true
-                                            )
-
-                                            if (resultat == SnackbarResult.ActionPerformed) {
-                                                viewModel.aterstallAktivitet(borttagenAktivitet)
-                                            }
-                                        }
-                                    }
-                                ) {
-
-
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Ta bort aktivitet",
-                                        tint = Color(0xFF9673C4)
-                                    )
-
                                 }
                             }
-                        }
-                    }
+                        )                    }
                 }
             }
         }
@@ -344,7 +291,34 @@ class MainActivity : ComponentActivity() {
                             Greeting("Android")
                         }
                     }
+@Composable
+fun ValkomstText(namn: String) {
+    Text(
+        text = "Välkommen till $namn!",
+        fontSize = 26.sp,
+        fontWeight = FontWeight.Bold
+    )
+}
 
 
-
-
+@Composable
+fun AktivitetsFalt(
+    namn: String,
+    onNamnAndrat: (String) -> Unit
+) {
+    OutlinedTextField(
+        value = namn,
+        onValueChange = onNamnAndrat,
+        label = { Text("Aktivitetens namn") }
+    )
+}
+@Composable
+fun AktivitetsStatistik(
+    genomforda: Int,
+    totalt: Int
+) {
+    Text(
+        text = "$genomforda av $totalt aktiviteter genomförda"
+    )
+}//Den nya funktionen tar emot två värden: antalet genomförda
+// aktiviteter och det totala antalet.
