@@ -107,10 +107,13 @@ class MainActivity : ComponentActivity() {
     fun Greeting(name: String, modifier: Modifier = Modifier) {
 
         val viewModel = remember { HundklubbenViewModel() }
+        // Hämtar appens aktuella tillstånd från ViewModel
+        val uiState = viewModel.uiState
         var aktivitetNamn by remember { mutableStateOf("") }
         var valdKategori by remember { mutableStateOf("Träning") }
         var redigerarId by remember { mutableStateOf<Int?>(null) }
-        var valtFilter by remember { mutableStateOf("Alla") }
+        // Hämtar det valda filtret från ViewModel via UiState
+        val valtFilter = uiState.valtFilter
         val snackbarHostState = remember { SnackbarHostState() }
         val coroutineScope = rememberCoroutineScope()
         //snackbarHostState håller reda på meddelandet som ska visas längst ner i appen
@@ -203,21 +206,22 @@ class MainActivity : ComponentActivity() {
 
                         if (valtFilter == filter) {
                             Button(
-                                onClick = { valtFilter = filter }
+                                onClick = { viewModel.andraFilter(filter) }
                             ) {
                                 Text(filter)
                             }
                         } else {
                             OutlinedButton(
-                                onClick = { valtFilter = filter }
+                                onClick = { viewModel.andraFilter(filter) }
                             ) {
                                 Text(filter)
                             }
                         }
                     }
                 }
-                val totalt = viewModel.aktiviteter.size
-                val genomforda = viewModel.aktiviteter.count { it.genomford }
+                // Hämtar statistiken från UiState
+                val totalt = uiState.aktiviteter.size
+                val genomforda = uiState.antalGenomforda
 
                 AktivitetsStatistik(
                     genomforda = genomforda,

@@ -2,9 +2,29 @@ package com.example.hundklubben
 
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+
 
 class HundklubbenViewModel : ViewModel() {
     val aktiviteter = mutableStateListOf<Aktivitet>()
+    // Håller reda på vilket filter användaren har valt
+    var valtFilter = mutableStateOf("Alla")
+        private set
+
+    // Uppdaterar filtret när användaren väljer ett alternativ
+    fun andraFilter(nyttFilter: String) {
+        valtFilter.value = nyttFilter
+    }
+
+    // Samlar aktivitetslistan och statistiken i ett gemensamt UI-tillstånd.
+// När aktivitetslistan ändras räknas värdena om.
+    // Samlar informationen som gränssnittet behöver visa
+    val uiState: HundklubbenUiState
+        get() = HundklubbenUiState(
+            aktiviteter = aktiviteter.toList(),
+            valtFilter = valtFilter.value,
+            antalGenomforda = aktiviteter.count { it.genomford }
+        )
     fun laggTillAktivitet(namn: String, kategori: String) {
         if (namn.isBlank()) return
 
@@ -13,6 +33,7 @@ class HundklubbenViewModel : ViewModel() {
             namn = namn.trim(),
             kategori = kategori
         )
+
 
         aktiviteter.add(nyAktivitet)
     }
