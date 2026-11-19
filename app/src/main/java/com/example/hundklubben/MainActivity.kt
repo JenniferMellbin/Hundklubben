@@ -57,6 +57,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -106,7 +107,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun Greeting(name: String, modifier: Modifier = Modifier) {
 
-        val viewModel = remember { HundklubbenViewModel() }
+        val viewModel: HundklubbenViewModel = viewModel();
         // Hämtar appens aktuella tillstånd från ViewModel
         val uiState = viewModel.uiState
         var aktivitetNamn by remember { mutableStateOf("") }
